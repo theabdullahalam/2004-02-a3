@@ -61,4 +61,44 @@ def get_student(student_id):
     return jsonify(dict(student)), 200
 
 
+# Update a student
+@app.route('/students/<int:student_id>', methods=['PUT'])
+def update_student(student_id):
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'No data provided'}), 400
 
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM students WHERE student_id = ?', (student_id,))
+    student = cursor.fetchone()
+
+    if not student:
+        return jsonify({'error': 'Student not found'}), 404
+
+    cursor.execute('UPDATE students SET first_name = ?, last_name = ?, dob = ?, amount_due = ? WHERE student_id = ?',
+                   (data['first_name'], data['last_name'], data['dob'], data['amount_due'], student_id))
+    conn.commit()
+    conn.close()
+    return jsonify({'message': 'Student updated successfully'}), 200
+
+
+# Delete a student
+@app.route('/students/<int:student_id>', methods=['DELETE'])
+def delete_student(student_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM students WHERE student_id = ?', (student_id,))
+    student = cursor.fetchone()
+
+    if not student:
+        return jsonify({'error': 'Student not found'}), 404
+
+    cursor.execute('DELETE FROM students WHERE student_id = ?', (student_id,))
+    conn.commit()
+    conn.close()
+    return jsonify({'message': 'Student deleted successfully'}), 200
+
+
+if __name__ == '__main__':
+    app.run(debug=True)
