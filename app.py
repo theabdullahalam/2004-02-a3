@@ -17,7 +17,48 @@ def initialize_database():
     conn.commit()
     conn.close()
 
-initialize_database()
+#initialize_database()
+# create a new student
+@app.route('/students', methods=['POST'])
+def create_student():
+    data = request.get_json()
+    if not data or not 'first_name' in data or not 'last_name' in data or not 'dob' in data or not 'amount_due' in data:
+        return jsonify({'error': 'Incomplete data'}), 400
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute('INSERT INTO students (first_name, last_name, dob, amount_due) VALUES (?, ?, ?, ?)',
+                   (data['first_name'], data['last_name'], data['dob'], data['amount_due']))
+    conn.commit()
+    conn.close()
+    return jsonify({'message': 'Student created successfully'}), 201
+
+
+# read all students
+@app.route('/students', methods=['GET'])
+def get_students():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM students')
+    students = cursor.fetchall()
+    conn.close()
+
+    return jsonify([dict(student) for student in students]), 200
+
+
+# read a specific student
+@app.route('/students/<int:student_id>', methods=['GET'])
+def get_student(student_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM students WHERE student_id = ?', (student_id,))
+    student = cursor.fetchone()
+    conn.close()
+
+    if not student:
+        return jsonify({'error': 'Student not found'}), 404
+
+    return jsonify(dict(student)), 200
 
 
 
